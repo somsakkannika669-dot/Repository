@@ -4,58 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>XITER SHOP</title>
-
 <style>
-body {
-    background: #0d0d0d;
-    color: white;
-    font-family: Arial;
-    text-align: center;
-}
-
-h1 {
-    color: #00ffcc;
-}
-
-.product {
-    background: #1a1a1a;
-    margin: 20px auto;
-    padding: 20px;
-    width: 80%;
-    border-radius: 10px;
-}
-
-button {
-    background: #00ffcc;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.cart {
-    background: #111;
-    padding: 20px;
-    margin-top: 30px;
-}
-
+body { background:#0d0d0d; color:white; font-family:Arial; text-align:center; }
+h1 { color:#00ffcc; }
+.product { background:#1a1a1a; margin:20px auto; padding:20px; width:80%; border-radius:10px; }
+button { background:#00ffcc; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; }
+.cart { background:#111; padding:20px; margin-top:30px; }
+a { color:#00ffcc; }
 </style>
 </head>
 <body>
 
 <h1>🔥 XITER SHOP 🔥</h1>
+<p><a href="admin.html">เข้าสู่ระบบแอดมิน</a></p>
 
-<div class="product">
-    <h2>PRODUCT 1</h2>
-    <p>ราคา: 100 บาท</p>
-    <button onclick="addToCart('PRODUCT 1',100)">เพิ่มลงตะกร้า</button>
-</div>
-
-<div class="product">
-    <h2>PRODUCT 2</h2>
-    <p>ราคา: 200 บาท</p>
-    <button onclick="addToCart('PRODUCT 2',200)">เพิ่มลงตะกร้า</button>
-</div>
+<div id="product-list"></div>
 
 <div class="cart">
     <h2>🛒 ตะกร้าสินค้า</h2>
@@ -67,14 +30,35 @@ button {
 let total = 0;
 
 function addToCart(name, price) {
-    let cart = document.getElementById("cart-items");
     let li = document.createElement("li");
     li.textContent = name + " - " + price + " บาท";
-    cart.appendChild(li);
-
+    document.getElementById("cart-items").appendChild(li);
     total += price;
     document.getElementById("total").textContent = total;
 }
+
+function loadProducts() {
+    let products = JSON.parse(localStorage.getItem("products")) || [
+        {name:"PRODUCT 1", price:100},
+        {name:"PRODUCT 2", price:200}
+    ];
+
+    let container = document.getElementById("product-list");
+    container.innerHTML = "";
+
+    products.forEach(p => {
+        let div = document.createElement("div");
+        div.className = "product";
+        div.innerHTML = `
+            <h2>${p.name}</h2>
+            <p>ราคา: ${p.price} บาท</p>
+            <button onclick="addToCart('${p.name}',${p.price})">เพิ่มลงตะกร้า</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+loadProducts();
 </script>
 
 </body>
