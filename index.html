@@ -3,152 +3,236 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>XITER SHOP</title>
+<title>My Shop</title>
 
 <style>
-body { background:#0f0f0f; color:white; font-family:sans-serif; text-align:center; margin:0; }
-h1 { color:#00ffc3; margin-top:20px; }
-.container { width:90%; max-width:500px; margin:auto; }
-.card { background:#1a1a1a; padding:20px; margin:20px 0; border-radius:12px; }
-button { background:#00ffc3; border:none; padding:10px 15px; border-radius:8px; cursor:pointer; margin:5px; }
-button:hover { opacity:0.8; }
-.cart, .admin-panel { background:#141414; padding:20px; margin-top:30px; border-radius:12px; }
-input { padding:8px; border-radius:6px; border:none; }
-.hidden { display:none; }
-.status-pending { color:orange; }
-.status-approved { color:lightgreen; }
+body{background:#0f0f0f;color:#fff;font-family:sans-serif;text-align:center}
+.card{background:#1c1c1c;padding:20px;margin:15px;border-radius:15px}
+button{background:#00e6a8;border:none;padding:10px 20px;border-radius:10px;cursor:pointer;margin:5px}
+input{padding:8px;border-radius:8px;border:none;margin:5px}
+.admin-btn{position:fixed;top:10px;right:10px}
+.hidden{display:none}
+.small{font-size:12px;color:#aaa}
 </style>
 </head>
 <body>
 
-<h1>🔥 XITER SHOP 🔥</h1>
-<button onclick="showAdminLogin()">🔐 เข้าแอดมิน</button>
+<button class="admin-btn" onclick="adminLogin()">🔐</button>
 
-<div class="container" id="product-list"></div>
+<h1>🛍 ร้านของฉัน</h1>
+<div id="product-list"></div>
 
-<div class="cart">
-    <h2>🛒 ตะกร้าสินค้า</h2>
-    <ul id="cart-items"></ul>
-    <h3>ยอดรวม: <span id="total">0</span> บาท</h3>
-    <button onclick="clearCart()">เคลียร์ตะกร้า</button>
+<div class="card">
+<h2>🛒 ตะกร้าสินค้า</h2>
+<div id="cart-items"></div>
+<h3>ยอดรวม: <span id="total">0</span> บาท</h3>
+
+<h3>📲 สแกนจ่าย PromptPay</h3>
+<div id="qrBox" class="small">QR จะสร้างเมื่อมียอดรวม</div>
+<br>
+<input type="file" id="slipUpload">
+<br>
+<button onclick="submitOrder()">แจ้งชำระเงิน</button>
+<button onclick="clearCart()">เคลียร์ตะกร้า</button>
 </div>
 
-<!-- ADMIN LOGIN -->
-<div id="adminLogin" class="admin-panel hidden">
-    <h2>🔐 Admin Login</h2>
-    <input type="password" id="adminPass" placeholder="รหัสผ่าน">
-    <br><br>
-    <button onclick="loginAdmin()">เข้าสู่ระบบ</button>
+<div class="card">
+<h2>📦 ประวัติการสั่งซื้อ</h2>
+<div id="order-history"></div>
 </div>
 
 <!-- ADMIN PANEL -->
-<div id="adminPanel" class="admin-panel hidden">
-    <h2>📦 จัดการออเดอร์</h2>
-    <button onclick="logoutAdmin()">ออกจากระบบ</button>
-    <ul id="admin-orders"></ul>
+<div id="adminPanel" class="hidden">
+<div class="card">
+<h2>⚙ แอดมิน</h2>
+
+<h3>➕ เพิ่มสินค้า</h3>
+<input type="text" id="newName" placeholder="ชื่อสินค้า">
+<input type="number" id="newPrice" placeholder="ราคา">
+<button onclick="addProduct()">เพิ่มสินค้า</button>
+
+<h3>🗑 ลบสินค้า</h3>
+<div id="admin-products"></div>
+
+<h3>📦 จัดการออเดอร์</h3>
+<div id="admin-orders"></div>
+
+<button onclick="logout()">ออกจากแอดมิน</button>
+</div>
 </div>
 
 <script>
+/* ====== ตั้งค่า ====== */
+const PROMPTPAY_PHONE="0989871584"; // 🔴 เปลี่ยนเป็นเบอร์คุณ
+const ADMIN_PASS="2005"; // 🔴 เปลี่ยนรหัสแอดมินได้ตรงนี้
+/* ==================== */
 
-let cartItems=[];
+let cart=[];
 let total=0;
 
+/* ---------- โหลดสินค้า ---------- */
 function loadProducts(){
-    let products=[
-        {name:"พาแนล 97%",price:250},
-        {name:"ตั้งค่าใช้ได้ทุกวัน",price:150}
-    ];
-    let container=document.getElementById("product-list");
-    container.innerHTML="";
-    products.forEach(p=>{
-        container.innerHTML+=`
-        <div class="card">
-            <h2>${p.name}</h2>
-            <p>${p.price} บาท</p>
-            <button onclick="addToCart('${p.name}',${p.price})">เพิ่มลงตะกร้า</button>
-        </div>`;
-    });
+let products=JSON.parse(localStorage.getItem("products"))||[
+{name:"พาแนล 97%",price:250},
+{name:"ตั้งค่าใช้ได้ทุกวัน",price:150}
+];
+localStorage.setItem("products",JSON.stringify(products));
+
+let container=document.getElementById("product-list");
+let adminList=document.getElementById("admin-products");
+container.innerHTML="";
+adminList.innerHTML="";
+
+products.forEach((p,index)=>{
+container.innerHTML+=`
+<div class="card">
+<h2>${p.name}</h2>
+<p>${p.price} บาท</p>
+<button onclick="addToCart('${p.name}',${p.price})">เพิ่มลงตะกร้า</button>
+</div>`;
+
+adminList.innerHTML+=`
+<p>${p.name} - ${p.price} บาท 
+<button onclick="deleteProduct(${index})">ลบ</button></p>`;
+});
 }
 
+/* ---------- เพิ่มสินค้า ---------- */
+function addProduct(){
+let name=document.getElementById("newName").value;
+let price=parseInt(document.getElementById("newPrice").value);
+
+if(!name||!price){alert("กรอกข้อมูลให้ครบ");return;}
+
+let products=JSON.parse(localStorage.getItem("products"))||[];
+products.push({name,price});
+localStorage.setItem("products",JSON.stringify(products));
+alert("เพิ่มสินค้าแล้ว");
+loadProducts();
+}
+
+/* ---------- ลบสินค้า ---------- */
+function deleteProduct(i){
+let products=JSON.parse(localStorage.getItem("products"));
+products.splice(i,1);
+localStorage.setItem("products",JSON.stringify(products));
+loadProducts();
+}
+
+/* ---------- ตะกร้า ---------- */
 function addToCart(name,price){
-    cartItems.push({name,price});
-    renderCart();
+cart.push({name,price});
+renderCart();
 }
 
 function renderCart(){
-    let cart=document.getElementById("cart-items");
-    cart.innerHTML="";
-    total=0;
-    cartItems.forEach(item=>{
-        total+=item.price;
-        cart.innerHTML+=`<li>${item.name} - ${item.price} บาท</li>`;
-    });
-    document.getElementById("total").textContent=total;
+let container=document.getElementById("cart-items");
+container.innerHTML="";
+total=0;
+
+cart.forEach(i=>{
+container.innerHTML+=`<p>${i.name} - ${i.price} บาท</p>`;
+total+=i.price;
+});
+
+document.getElementById("total").innerText=total;
+generateQR();
 }
 
 function clearCart(){
-    cartItems=[];
-    renderCart();
+cart=[];
+renderCart();
+document.getElementById("qrBox").innerHTML="QR จะสร้างเมื่อมียอดรวม";
 }
 
-/* ================= ADMIN ================= */
-
-function showAdminLogin(){
-    document.getElementById("adminLogin").classList.remove("hidden");
+/* ---------- QR ---------- */
+function generateQR(){
+if(total<=0){
+document.getElementById("qrBox").innerHTML="QR จะสร้างเมื่อมียอดรวม";
+return;
+}
+let amount=total.toFixed(2);
+let url=`https://promptpay.io/${PROMPTPAY_PHONE}/${amount}.png`;
+document.getElementById("qrBox").innerHTML=
+`<img src="${url}" width="220">
+<div class="small">เบอร์ ${PROMPTPAY_PHONE} | ${amount} บาท</div>`;
 }
 
-function loginAdmin(){
-    let pass=document.getElementById("adminPass").value;
-    if(pass==="1234"){   // 🔥 เปลี่ยนรหัสได้ตรงนี้
-        document.getElementById("adminLogin").classList.add("hidden");
-        document.getElementById("adminPanel").classList.remove("hidden");
-        loadAdminOrders();
-    } else {
-        alert("รหัสผ่านผิด");
-    }
+/* ---------- สั่งซื้อ ---------- */
+function submitOrder(){
+if(total===0){alert("ยังไม่มีสินค้า");return;}
+let slip=document.getElementById("slipUpload").files[0];
+if(!slip){alert("กรุณาแนบสลิป");return;}
+
+let orders=JSON.parse(localStorage.getItem("orders"))||[];
+orders.push({
+date:new Date().toLocaleString(),
+total:total,
+slip:slip.name,
+status:"รอตรวจสอบ"
+});
+localStorage.setItem("orders",JSON.stringify(orders));
+
+alert("แจ้งชำระเงินสำเร็จ");
+cart=[];
+renderCart();
+loadOrders();
 }
 
-function logoutAdmin(){
-    document.getElementById("adminPanel").classList.add("hidden");
+/* ---------- โหลดออเดอร์ ---------- */
+function loadOrders(){
+let orders=JSON.parse(localStorage.getItem("orders"))||[];
+let history=document.getElementById("order-history");
+let admin=document.getElementById("admin-orders");
+history.innerHTML="";
+admin.innerHTML="";
+
+orders.forEach((o,i)=>{
+history.innerHTML+=`
+<p>🕒 ${o.date}<br>
+💰 ${o.total} บาท<br>
+📎 ${o.slip}<br>
+📌 ${o.status}</p><hr>`;
+
+admin.innerHTML+=`
+<p>${o.date} - ${o.total} บาท - ${o.status}
+<br>
+<button onclick="approve(${i})">อนุมัติ</button>
+<button onclick="deleteOrder(${i})">ลบ</button>
+</p><hr>`;
+});
 }
 
-function loadAdminOrders(){
-    let orders=JSON.parse(localStorage.getItem("orders"))||[];
-    let list=document.getElementById("admin-orders");
-    list.innerHTML="";
-
-    orders.forEach((order,index)=>{
-        let statusClass=order.status==="อนุมัติแล้ว"?"status-approved":"status-pending";
-        list.innerHTML+=`
-        <li>
-        🕒 ${order.date} <br>
-        💰 ${order.total} บาท <br>
-        📎 ${order.slip} <br>
-        สถานะ: <span class="${statusClass}">${order.status||"รอตรวจสอบ"}</span>
-        <br>
-        <button onclick="approveOrder(${index})">อนุมัติ</button>
-        <button onclick="deleteOrder(${index})">ลบ</button>
-        <hr>
-        </li>`;
-    });
+function approve(i){
+let orders=JSON.parse(localStorage.getItem("orders"));
+orders[i].status="อนุมัติแล้ว";
+localStorage.setItem("orders",JSON.stringify(orders));
+loadOrders();
 }
 
-function approveOrder(index){
-    let orders=JSON.parse(localStorage.getItem("orders"))||[];
-    orders[index].status="อนุมัติแล้ว";
-    localStorage.setItem("orders",JSON.stringify(orders));
-    loadAdminOrders();
+function deleteOrder(i){
+let orders=JSON.parse(localStorage.getItem("orders"));
+orders.splice(i,1);
+localStorage.setItem("orders",JSON.stringify(orders));
+loadOrders();
 }
 
-function deleteOrder(index){
-    let orders=JSON.parse(localStorage.getItem("orders"))||[];
-    orders.splice(index,1);
-    localStorage.setItem("orders",JSON.stringify(orders));
-    loadAdminOrders();
+/* ---------- แอดมิน ---------- */
+function adminLogin(){
+let pass=prompt("ใส่รหัสแอดมิน");
+if(pass===ADMIN_PASS){
+document.getElementById("adminPanel").classList.remove("hidden");
+}else alert("รหัสผิด");
 }
 
+function logout(){
+document.getElementById("adminPanel").classList.add("hidden");
+}
+
+/* ---------- เริ่มระบบ ---------- */
 loadProducts();
-
+loadOrders();
 </script>
+
 </body>
 </html>
