@@ -4,61 +4,233 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>XITER SHOP</title>
+
 <style>
-body { background:#0d0d0d; color:white; font-family:Arial; text-align:center; }
-h1 { color:#00ffcc; }
-.product { background:#1a1a1a; margin:20px auto; padding:20px; width:80%; border-radius:10px; }
-button { background:#00ffcc; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; }
-.cart { background:#111; padding:20px; margin-top:30px; }
-a { color:#00ffcc; }
+body {
+    background:#0f0f0f;
+    color:white;
+    font-family:sans-serif;
+    text-align:center;
+    margin:0;
+}
+h1 { color:#00ffc3; margin-top:20px; }
+.container { width:90%; max-width:500px; margin:auto; }
+.card {
+    background:#1a1a1a;
+    padding:20px;
+    margin:20px 0;
+    border-radius:12px;
+}
+button {
+    background:#00ffc3;
+    border:none;
+    padding:10px 15px;
+    border-radius:8px;
+    cursor:pointer;
+    margin:5px;
+}
+button:hover { opacity:0.8; }
+.cart {
+    background:#141414;
+    padding:20px;
+    margin-top:30px;
+    border-radius:12px;
+}
+input { margin:10px 0; }
+.order-history {
+    background:#1a1a1a;
+    padding:20px;
+    margin-top:30px;
+    border-radius:12px;
+}
 </style>
 </head>
 <body>
 
 <h1>🔥 XITER SHOP 🔥</h1>
-<p><a href="admin.html">เข้าสู่ระบบแอดมิน</a></p>
 
-<div id="product-list"></div>
+<div class="container" id="product-list"></div>
 
 <div class="cart">
     <h2>🛒 ตะกร้าสินค้า</h2>
     <ul id="cart-items"></ul>
     <h3>ยอดรวม: <span id="total">0</span> บาท</h3>
+
+    <button onclick="clearCart()">เคลียร์ตะกร้า</button>
+    <button onclick="generateQR()">ชำระเงิน (PromptPay)</button>
+
+    <div id="qr-section"></div>
+
+    <div id="payment-section" style="display:none;">
+        <h3>📎 แนบสลิปหลังโอนเงิน</h3>
+        <input type="file" id="slipUpload">
+        <br>
+        <button onclick="confirmPayment()">ยืนยันการโอน</button>
+    </div>
+</div>
+
+<div class="order-history">
+    <h2>📦 ประวัติการสั่งซื้อ</h2>
+    <ul id="order-list"></ul>
 </div>
 
 <script>
+
+let cartItems = [];
 let total = 0;
 
-function addToCart(name, price) {
-    let li = document.createElement("li");
-    li.textContent = name + " - " + price + " บาท";
-    document.getElementById("cart-items").appendChild(li);
-    total += price;
-    document.getElementById("total").textContent = total;
-}
-
+// โหลดสินค้า
 function loadProducts() {
-    let products = JSON.parse(localStorage.getItem("products")) || [
-        {name:"PRODUCT 1", price:100},
-        {name:"PRODUCT 2", price:200}
+    let products = [
+        {name:"พาแนล 97%", price:250},
+        {name:"ตั้งค่าใช้ได้ทุกวัน", price:150}
     ];
 
-    let container = document.getElementById("product-list");
+    const container = document.getElementById("product-list");
     container.innerHTML = "";
 
-    products.forEach(p => {
-        let div = document.createElement("div");
-        div.className = "product";
-        div.innerHTML = `
-            <h2>${p.name}</h2>
-            <p>ราคา: ${p.price} บาท</p>
-            <button onclick="addToCart('${p.name}',${p.price})">เพิ่มลงตะกร้า</button>
+    products.forEach(product => {
+        container.innerHTML += `
+            <div class="card">
+                <h2>${product.name}</h2>
+                <p>ราคา: ${product.price} บาท</p>
+                <button onclick="addToCart('${product.name}',${product.price})">
+                เพิ่มลงตะกร้า</button>
+            </div>
         `;
-        container.appendChild(div);
+    });
+}
+
+function addToCart(name, price) {
+    cartItems.push({name, price});
+    renderCart();
+}
+
+function removeItem(index) {
+    cartItems.splice(index,1);
+    renderCart();
+}
+
+function clearCart() {
+    cartItems = [];
+    renderCart();
+    document.getElementById("qr-section").innerHTML="";
+    document.getElementById("payment-section").style.display="none";
+}
+
+function renderCart() {
+    const cart = document.getElementById("cart-items");
+    cart.innerHTML="";
+    total=0;
+
+    cartItems.forEach((item,index)=>{
+        total+=item.price;
+        cart.innerHTML+=`
+            <li>
+            ${item.name} - ${item.price} บาท
+            <button onclick="removeItem(${index})">ลบ</button>
+            </li>
+        `;
+    });
+
+    document.getElementById("total").textContent=total;
+}
+
+// ===== PromptPay QR =====
+function generateQR() {
+
+    if(total<=0){
+        alert("ยังไม่มีสินค้า");
+        return;
+    }
+
+    const phoneNumber="YOUR_PHONE_NUMBER"; // 🔥 ใส่เบอร์พร้อมเพย์คุณ
+
+    let formattedPhone=phoneNumber.replace(/^0/,"66");
+
+    let payload=
+        "00020101021129370016A000000677010111"+
+        "01130066"+formattedPhone+
+        "5802TH5303764"+
+        "54"+total.toString().length.toString().padStart(2,"0")+total+
+        "6304";
+
+    function crc16(s){
+        let crc=0xFFFF;
+        for(let c=0;c<s.length;c++){
+            crc^=s.charCodeAt(c)<<8;
+            for(let i=0;i<8;i++){
+                crc=(crc&0x8000)?(crc<<1)^0x1021:crc<<1;
+            }
+        }
+        return (crc&0xFFFF).toString(16).toUpperCase();
+    }
+
+    let finalPayload=payload+crc16(payload).padStart(4,"0");
+
+    let qrURL="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data="+finalPayload;
+
+    document.getElementById("qr-section").innerHTML=`
+        <h3>💸 สแกนเพื่อชำระ ${total} บาท</h3>
+        <img src="${qrURL}">
+    `;
+
+    document.getElementById("payment-section").style.display="block";
+}
+
+// ===== ยืนยันการโอน =====
+function confirmPayment(){
+
+    let file=document.getElementById("slipUpload").files[0];
+
+    if(!file){
+        alert("กรุณาแนบสลิปก่อน");
+        return;
+    }
+
+    let orders=JSON.parse(localStorage.getItem("orders"))||[];
+
+    orders.push({
+        items:cartItems,
+        total:total,
+        slip:file.name,
+        date:new Date().toLocaleString()
+    });
+
+    localStorage.setItem("orders",JSON.stringify(orders));
+
+    alert("✅ ส่งสลิปเรียบร้อยแล้ว รอตรวจสอบ");
+
+    cartItems=[];
+    renderCart();
+    document.getElementById("qr-section").innerHTML="";
+    document.getElementById("payment-section").style.display="none";
+    document.getElementById("slipUpload").value="";
+
+    loadOrders();
+}
+
+// ===== โหลดประวัติออเดอร์ =====
+function loadOrders(){
+    let orders=JSON.parse(localStorage.getItem("orders"))||[];
+    let list=document.getElementById("order-list");
+    list.innerHTML="";
+
+    orders.forEach(order=>{
+        list.innerHTML+=`
+            <li>
+            🕒 ${order.date} <br>
+            💰 ${order.total} บาท <br>
+            📎 สลิป: ${order.slip}
+            <hr>
+            </li>
+        `;
     });
 }
 
 loadProducts();
+loadOrders();
+
 </script>
 
 </body>
