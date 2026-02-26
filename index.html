@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>บักรินช๊อป</title>
+<title>Rin- SHOP</title>
 
 <style>
 body{
@@ -23,39 +23,19 @@ body{
     margin-bottom:20px;
 }
 
-.stats{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin-bottom:20px;
-}
-.stat-box{
-    background:#111;
-    border-radius:15px;
-    padding:15px;
-    text-align:center;
-    border:1px solid #ff0000;
-}
-.stat-box span{
-    font-size:20px;
-    color:#ff2e2e;
-    font-weight:bold;
-}
-
 .menu{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:10px;
     margin-bottom:20px;
 }
-.menu button{
+button{
     background:linear-gradient(90deg,#ff0000,#800000);
     border:none;
-    padding:18px;
+    padding:15px;
     color:white;
     font-weight:bold;
-    border-radius:15px;
-    font-size:16px;
+    border-radius:12px;
 }
 
 .products{
@@ -73,117 +53,116 @@ body{
     width:100%;
     border-radius:10px;
 }
-.product h3{
-    font-size:14px;
-    margin:8px 0;
-}
-.product p{
-    color:#ff2e2e;
-    font-weight:bold;
-}
-.product button{
+.product p{ color:#ff2e2e; font-weight:bold; }
+
+input{
     width:100%;
     padding:10px;
-    background:red;
+    margin-bottom:10px;
+    border-radius:8px;
     border:none;
-    color:white;
-    border-radius:10px;
 }
+#admin-section{ display:none; }
+#cart-section{ display:none; }
 
-/* Cart Section */
-#cart-section{
-    display:none;
-}
 .cart-item{
     background:#111;
-    padding:15px;
-    border-radius:10px;
+    padding:10px;
     margin-bottom:10px;
-}
-.cart-item button{
-    margin-top:5px;
-    background:#ff0000;
-}
-.total{
-    font-size:18px;
-    font-weight:bold;
-    margin-top:10px;
-}
-.back-btn{
-    margin-bottom:15px;
-    background:#444;
+    border-radius:10px;
 }
 </style>
 </head>
 
 <body>
-
 <div class="container">
 
-    <div class="banner">B-GOD SHOP</div>
+<div class="banner">B-GOD SHOP</div>
 
-    <!-- หน้าแรก -->
-    <div id="shop-section">
+<div class="menu">
+    <button onclick="showShop()">สินค้า</button>
+    <button onclick="showCart()">ตะกร้า</button>
+    <button onclick="showAdminLogin()">แอดมิน</button>
+</div>
 
-        <div class="stats">
-            <div class="stat-box">ผู้ใช้งาน<br><span>12,403</span></div>
-            <div class="stat-box">หมวดหมู่<br><span>18</span></div>
-            <div class="stat-box">สินค้า<br><span>4,241</span></div>
-            <div class="stat-box">ยอดเติมเงิน<br><span>1,643,072</span></div>
-        </div>
+<!-- ร้านค้า -->
+<div id="shop-section">
+    <div class="products" id="product-list"></div>
+</div>
 
-        <div class="menu">
-            <button onclick="showShop()">สินค้า</button>
-            <button onclick="showCart()">🛒 ตะกร้า</button>
-            <button>ประวัติ</button>
-            <button>ติดต่อ</button>
-        </div>
+<!-- ตะกร้า -->
+<div id="cart-section">
+    <button onclick="showShop()">⬅ กลับ</button>
+    <h2>ตะกร้า</h2>
+    <div id="cart-list"></div>
+    <h3 id="total"></h3>
+</div>
 
-        <div class="products">
+<!-- ล็อกอินแอดมิน -->
+<div id="admin-login" style="display:none;">
+    <h2>เข้าสู่ระบบแอดมิน</h2>
+    <input type="password" id="admin-pass" placeholder="รหัสผ่าน">
+    <button onclick="loginAdmin()">เข้าสู่ระบบ</button>
+</div>
 
-            <div class="product">
-                <img src="https://via.placeholder.com/300x200">
-                <h3>ไฟล์ดูดหัว VIP 90%</h3>
-                <p>150 บาท</p>
-                <button onclick="addToCart('ไฟล์ VIP 90%',150)">เพิ่มลงตะกร้า</button>
-            </div>
-
-            <div class="product">
-                <img src="https://via.placeholder.com/300x200">
-                <h3>ไฟล์ดูดหัว VIP 93%</h3>
-                <p>180 บาท</p>
-                <button onclick="addToCart('ไฟล์ VIP 93%',180)">เพิ่มลงตะกร้า</button>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- ตะกร้า -->
-    <div id="cart-section">
-        <button class="back-btn" onclick="showShop()">⬅ กลับร้านค้า</button>
-        <h2>ตะกร้าสินค้า</h2>
-        <div id="cart-list"></div>
-        <div class="total" id="total"></div>
-        <button onclick="checkout()">ชำระเงิน</button>
-    </div>
+<!-- หน้าแอดมิน -->
+<div id="admin-section">
+    <h2>เพิ่มสินค้า</h2>
+    <input type="text" id="pname" placeholder="ชื่อสินค้า">
+    <input type="number" id="pprice" placeholder="ราคา">
+    <input type="text" id="pimg" placeholder="ลิงก์รูปภาพ">
+    <button onclick="addProduct()">เพิ่มสินค้า</button>
+</div>
 
 </div>
 
 <script>
+let products = JSON.parse(localStorage.getItem("products")) || [
+    {name:"VIP 90%", price:150, img:"https://via.placeholder.com/300x200"},
+    {name:"VIP 93%", price:180, img:"https://via.placeholder.com/300x200"}
+];
+
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-function saveCart(){
-    localStorage.setItem("cart", JSON.stringify(cart));
+function saveProducts(){
+    localStorage.setItem("products", JSON.stringify(products));
 }
 
-function addToCart(name, price){
-    cart.push({name, price});
-    saveCart();
+function renderProducts(){
+    let list = document.getElementById("product-list");
+    list.innerHTML="";
+    products.forEach((p)=>{
+        list.innerHTML+=`
+        <div class="product">
+            <img src="${p.img}">
+            <h4>${p.name}</h4>
+            <p>${p.price} บาท</p>
+            <button onclick="addToCart('${p.name}',${p.price})">เพิ่มลงตะกร้า</button>
+        </div>`;
+    });
+}
+
+function addProduct(){
+    let name=document.getElementById("pname").value;
+    let price=parseInt(document.getElementById("pprice").value);
+    let img=document.getElementById("pimg").value;
+
+    products.push({name,price,img});
+    saveProducts();
+    renderProducts();
     alert("เพิ่มสินค้าแล้ว");
+}
+
+function addToCart(name,price){
+    cart.push({name,price});
+    localStorage.setItem("cart",JSON.stringify(cart));
+    alert("เพิ่มลงตะกร้าแล้ว");
 }
 
 function showCart(){
     document.getElementById("shop-section").style.display="none";
+    document.getElementById("admin-section").style.display="none";
+    document.getElementById("admin-login").style.display="none";
     document.getElementById("cart-section").style.display="block";
     renderCart();
 }
@@ -191,37 +170,48 @@ function showCart(){
 function showShop(){
     document.getElementById("shop-section").style.display="block";
     document.getElementById("cart-section").style.display="none";
+    document.getElementById("admin-section").style.display="none";
+    document.getElementById("admin-login").style.display="none";
 }
 
 function renderCart(){
-    let list = document.getElementById("cart-list");
-    let total = 0;
-    list.innerHTML = "";
-
-    cart.forEach((item,index)=>{
-        total += item.price;
-        list.innerHTML += `
-            <div class="cart-item">
-                ${item.name} - ${item.price} บาท
-                <br>
-                <button onclick="removeItem(${index})">ลบ</button>
-            </div>
-        `;
+    let list=document.getElementById("cart-list");
+    let total=0;
+    list.innerHTML="";
+    cart.forEach((item,i)=>{
+        total+=item.price;
+        list.innerHTML+=`
+        <div class="cart-item">
+            ${item.name} - ${item.price} บาท
+            <button onclick="removeItem(${i})">ลบ</button>
+        </div>`;
     });
-
-    document.getElementById("total").innerText =
-        "รวมทั้งหมด: " + total + " บาท";
+    document.getElementById("total").innerText="รวม: "+total+" บาท";
 }
 
-function removeItem(index){
-    cart.splice(index,1);
-    saveCart();
+function removeItem(i){
+    cart.splice(i,1);
+    localStorage.setItem("cart",JSON.stringify(cart));
     renderCart();
 }
 
-function checkout(){
-    alert("ระบบชำระเงินจริงจะพัฒนาเพิ่มภายหลัง");
+function showAdminLogin(){
+    document.getElementById("shop-section").style.display="none";
+    document.getElementById("cart-section").style.display="none";
+    document.getElementById("admin-login").style.display="block";
 }
+
+function loginAdmin(){
+    let pass=document.getElementById("admin-pass").value;
+    if(pass==="1234"){ // เปลี่ยนรหัสได้
+        document.getElementById("admin-login").style.display="none";
+        document.getElementById("admin-section").style.display="block";
+    }else{
+        alert("รหัสผ่านผิด");
+    }
+}
+
+renderProducts();
 </script>
 
 </body>
