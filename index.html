@@ -1,106 +1,66 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ร้านค้าออนไลน์</title>
-
-<style>
-body{
-  font-family: Arial;
-  text-align:center;
-  background:#111;
-  color:white;
-}
-
-.product{
-  background:#222;
-  padding:20px;
-  margin:15px;
-  border-radius:12px;
-}
-
-button{
-  padding:10px 20px;
-  border:none;
-  border-radius:8px;
-  background:#00c896;
-  color:white;
-  cursor:pointer;
-}
-
-.cart{
-  background:#222;
-  padding:20px;
-  margin:20px;
-  border-radius:12px;
-}
-
-.qr{
-  margin-top:20px;
-}
-</style>
+  <meta charset="UTF-8">
+  <title>My Shop</title>
 </head>
-
 <body>
 
-<h1>ร้านค้าของฉัน 🛍️</h1>
+<h1>สินค้า</h1>
+<div id="product-list"></div>
 
-<div class="product">
-<h2>ตั้งค่า iOS ❤️</h2>
-<p>50 บาท</p>
-<button onclick="addToCart('ตั้งค่า iOS',50)">เพิ่มลงตะกร้า</button>
-</div>
+<h2>ตะกร้า</h2>
+<div id="cart"></div>
 
-<div class="product">
-<h2>พาแนล iOS 90%</h2>
-<p>150 บาท</p>
-<button onclick="addToCart('พาแนล iOS',150)">เพิ่มลงตะกร้า</button>
-</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-<div class="cart">
-<h2>🛒 ตะกร้า</h2>
-<div id="list"></div>
-<h3>รวม: <span id="total">0</span> บาท</h3>
-<button onclick="pay()">ชำระเงิน</button>
-</div>
+// 🔥 ใส่ค่าของคุณ
+const firebaseConfig = {
+  apiKey: "AIzaSyCmO6wrh1loVv8ktjrqT...",
+  authDomain: "myshop-cd2cb.firebaseapp.com",
+  projectId: "myshop-cd2cb",
+  storageBucket: "myshop-cd2cb.appspot.com",
+  messagingSenderId: "308991984475",
+  appId: "1:308991984475:web:0b6a8c8..."
+};
 
-<div class="qr" id="qr"></div>
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-<script>
-let cart=[];
-let total=0;
+const productList = document.getElementById("product-list");
+const cartDiv = document.getElementById("cart");
 
-function addToCart(name,price){
-  cart.push({name,price});
-  total+=price;
-  render();
-}
+let cart = [];
 
-function render(){
-  let html="";
-  cart.forEach(i=>{
-    html+="<p>"+i.name+" - "+i.price+" บาท</p>";
+function renderCart() {
+  cartDiv.innerHTML = "";
+  cart.forEach(item => {
+    cartDiv.innerHTML += `<p>${item.name} - ${item.price} บาท</p>`;
   });
-  document.getElementById("list").innerHTML=html;
-  document.getElementById("total").innerText=total;
 }
 
-function pay(){
-  if(total==0){
-    alert("ยังไม่มีสินค้า");
-    return;
-  }
-
-  let phone="0989871584"; // ใส่เบอร์คุณตรงนี้
-  let qr="https://promptpay.io/"+phone+"/"+total+".png";
-
-  document.getElementById("qr").innerHTML=
-  "<h2>สแกนจ่าย "+total+" บาท</h2>"+
-  "<img src='"+qr+"' width='250'><br><br>"+
-  "<a href='https://line.me/ti/p/YOUR_LINE_ID' target='_blank'>" +
-  "<button>ส่งสลิปทาง LINE</button></a>";
+async function loadProducts() {
+  const querySnapshot = await getDocs(collection(db, "products"));
+  querySnapshot.forEach((doc) => {
+    const data = doc.data();
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <p><b>${data.name}</b></p>
+      <p>${data.price} บาท</p>
+      <button>เพิ่มตะกร้า</button>
+      <hr>
+    `;
+    div.querySelector("button").onclick = () => {
+      cart.push(data);
+      renderCart();
+    };
+    productList.appendChild(div);
+  });
 }
+
+loadProducts();
 </script>
 
 </body>
