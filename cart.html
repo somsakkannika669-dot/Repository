@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ตะกร้า</title>
+<style>
+body{
+    background:#0a0000;
+    color:white;
+    font-family:Arial;
+    padding:20px;
+}
+.item{
+    background:#111;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:10px;
+}
+button{
+    padding:10px;
+    background:red;
+    color:white;
+    border:none;
+    border-radius:8px;
+}
+</style>
+</head>
+<body>
+
+<h2>ตะกร้าสินค้า</h2>
+<div id="cart-list"></div>
+
+<h3 id="total"></h3>
+
+<button onclick="checkout()">ชำระเงิน</button>
+
+<script>
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+let list = document.getElementById("cart-list");
+let total = 0;
+
+cart.forEach(item=>{
+    list.innerHTML += `
+        <div class="item">
+            ${item.name} - ${item.price} บาท
+        </div>
+    `;
+    total += item.price;
+});
+
+document.getElementById("total").innerText = 
+"รวมทั้งหมด: " + total + " บาท";
+
+function checkout(){
+    alert("ระบบชำระเงินจะพัฒนาในขั้นต่อไป");
+}
+</script>
+
+</body>
+</html>
