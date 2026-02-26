@@ -1,84 +1,170 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>ร้านค้าออนไลน์</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHOP</title>
+
+<style>
+body{
+    margin:0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(180deg,#1a0000,#0a0000);
+    color:white;
+}
+
+/* container */
+.container{
+    padding:15px;
+}
+
+/* banner */
+.banner{
+    background: linear-gradient(90deg,#ff0000,#990000);
+    padding:20px;
+    border-radius:15px;
+    text-align:center;
+    font-weight:bold;
+    margin-bottom:20px;
+}
+
+/* stat box */
+.stats{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:20px;
+}
+
+.stat-box{
+    background:#111;
+    border-radius:15px;
+    padding:15px;
+    text-align:center;
+    border:1px solid #ff0000;
+}
+
+.stat-box span{
+    font-size:20px;
+    color:#ff2e2e;
+    font-weight:bold;
+}
+
+/* menu buttons */
+.menu{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:20px;
+}
+
+.menu button{
+    background:linear-gradient(90deg,#ff0000,#800000);
+    border:none;
+    padding:18px;
+    color:white;
+    font-weight:bold;
+    border-radius:15px;
+    font-size:16px;
+}
+
+/* products */
+.products{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:15px;
+}
+
+.product{
+    background:#111;
+    border-radius:15px;
+    padding:10px;
+    border:1px solid #ff0000;
+}
+
+.product img{
+    width:100%;
+    border-radius:10px;
+}
+
+.product h3{
+    font-size:14px;
+    margin:8px 0;
+}
+
+.product p{
+    color:#ff2e2e;
+    font-weight:bold;
+}
+
+.product button{
+    width:100%;
+    padding:10px;
+    background:red;
+    border:none;
+    color:white;
+    border-radius:10px;
+}
+</style>
 </head>
+
 <body>
 
-<h1>สินค้า</h1>
-<div id="products"></div>
+<div class="container">
 
-<hr>
+    <!-- banner -->
+    <div class="banner">
+        B-GOD SHOP
+    </div>
 
-<h2>ตะกร้า</h2>
-<div id="cart"></div>
+    <!-- stats -->
+    <div class="stats">
+        <div class="stat-box">
+            ผู้ใช้งาน<br>
+            <span>12,403</span>
+        </div>
+        <div class="stat-box">
+            หมวดหมู่<br>
+            <span>18</span>
+        </div>
+        <div class="stat-box">
+            สินค้า<br>
+            <span>4,241</span>
+        </div>
+        <div class="stat-box">
+            ยอดเติมเงิน<br>
+            <span>1,643,072</span>
+        </div>
+    </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    <!-- menu -->
+    <div class="menu">
+        <button>สินค้า</button>
+        <button>เติมเงิน</button>
+        <button>ประวัติ</button>
+        <button>ติดต่อ</button>
+    </div>
 
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "myshop-cd2cb.firebaseapp.com",
-  projectId: "myshop-cd2cb",
-  storageBucket: "myshop-cd2cb.appspot.com",
-  messagingSenderId: "308991984475",
-  appId: "1:308991984475:web:xxxxxxxxxxxx"
-};
+    <!-- products -->
+    <div class="products">
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+        <div class="product">
+            <img src="https://via.placeholder.com/300x200">
+            <h3>ไฟล์ดูดหัว VIP 90%</h3>
+            <p>150 บาท</p>
+            <button>ลงเล่น</button>
+        </div>
 
-let cart = [];
+        <div class="product">
+            <img src="https://via.placeholder.com/300x200">
+            <h3>ไฟล์ดูดหัว VIP 93%</h3>
+            <p>180 บาท</p>
+            <button>ลงเล่น</button>
+        </div>
 
-// โหลดสินค้า
-const querySnapshot = await getDocs(collection(db, "products"));
-const productDiv = document.getElementById("products");
+    </div>
 
-querySnapshot.forEach((doc) => {
-  const data = doc.data();
-
-  const div = document.createElement("div");
-
-  div.innerHTML = `
-    <h3>${data.name}</h3>
-    <p>${data.price} บาท</p>
-    <button onclick="addToCart('${data.name}', ${data.price})">
-      เพิ่มตะกร้า
-    </button>
-    <hr>
-  `;
-
-  productDiv.appendChild(div);
-});
-
-// เพิ่มสินค้าเข้าตะกร้า
-window.addToCart = function(name, price) {
-  cart.push({ name, price });
-  renderCart();
-};
-
-// แสดงตะกร้า
-function renderCart() {
-  const cartDiv = document.getElementById("cart");
-  cartDiv.innerHTML = "";
-
-  let total = 0;
-
-  cart.forEach((item) => {
-    total += item.price;
-
-    const p = document.createElement("p");
-    p.innerText = item.name + " - " + item.price + " บาท";
-    cartDiv.appendChild(p);
-  });
-
-  const totalText = document.createElement("h3");
-  totalText.innerText = "รวมทั้งหมด: " + total + " บาท";
-  cartDiv.appendChild(totalText);
-}
-</script>
+</div>
 
 </body>
 </html>
