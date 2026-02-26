@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel</title>
+<style>
+body { background:#0d0d0d; color:white; font-family:Arial; text-align:center; }
+input { padding:10px; margin:5px; }
+button { padding:10px 20px; background:#00ffcc; border:none; cursor:pointer; }
+.product { margin:10px; }
+</style>
+</head>
+<body>
+
+<h1>🔐 Admin Panel</h1>
+
+<div id="login">
+    <input type="password" id="password" placeholder="ใส่รหัสผ่าน">
+    <button onclick="login()">เข้าสู่ระบบ</button>
+</div>
+
+<div id="admin-panel" style="display:none;">
+    <h2>เพิ่มสินค้า</h2>
+    <input type="text" id="name" placeholder="ชื่อสินค้า">
+    <input type="number" id="price" placeholder="ราคา">
+    <button onclick="addProduct()">เพิ่มสินค้า</button>
+
+    <h2>รายการสินค้า</h2>
+    <div id="product-list"></div>
+</div>
+
+<script>
+const ADMIN_PASSWORD = "1234"; // เปลี่ยนรหัสตรงนี้ได้
+
+function login() {
+    let pass = document.getElementById("password").value;
+    if (pass === ADMIN_PASSWORD) {
+        document.getElementById("login").style.display = "none";
+        document.getElementById("admin-panel").style.display = "block";
+        loadProducts();
+    } else {
+        alert("รหัสผ่านไม่ถูกต้อง");
+    }
+}
+
+function addProduct() {
+    let name = document.getElementById("name").value;
+    let price = document.getElementById("price").value;
+
+    let products = JSON.parse(localStorage.getItem("products")) || [];
+    products.push({name, price});
+    localStorage.setItem("products", JSON.stringify(products));
+
+    loadProducts();
+}
+
+function deleteProduct(index) {
+    let products = JSON.parse(localStorage.getItem("products")) || [];
+    products.splice(index,1);
+    localStorage.setItem("products", JSON.stringify(products));
+    loadProducts();
+}
+
+function loadProducts() {
+    let products = JSON.parse(localStorage.getItem("products")) || [];
+    let container = document.getElementById("product-list");
+    container.innerHTML = "";
+
+    products.forEach((p,i) => {
+        let div = document.createElement("div");
+        div.className="product";
+        div.innerHTML = `
+            ${p.name} - ${p.price} บาท
+            <button onclick="deleteProduct(${i})">ลบ</button>
+        `;
+        container.appendChild(div);
+    });
+}
+</script>
+
+</body>
+</html>
