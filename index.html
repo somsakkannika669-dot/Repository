@@ -3,74 +3,103 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ร้านค้าออนไลน์ของฉัน</title>
+<title>ร้านค้าออนไลน์</title>
+
 <style>
-body {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  background: #f4f4f4;
+body{
+  font-family: Arial;
+  text-align:center;
+  background:#111;
+  color:white;
 }
 
-.container {
-  margin-top: 50px;
+.product{
+  background:#222;
+  padding:20px;
+  margin:15px;
+  border-radius:12px;
 }
 
-.product {
-  background: white;
-  padding: 20px;
-  margin: 20px;
-  display: inline-block;
-  border-radius: 10px;
-  width: 200px;
+button{
+  padding:10px 20px;
+  border:none;
+  border-radius:8px;
+  background:#00c896;
+  color:white;
+  cursor:pointer;
 }
 
-button {
-  padding: 10px 15px;
-  border: none;
-  background: orange;
-  color: white;
-  border-radius: 5px;
-  cursor: pointer;
+.cart{
+  background:#222;
+  padding:20px;
+  margin:20px;
+  border-radius:12px;
 }
 
-.qr-box {
-  margin-top: 30px;
+.qr{
+  margin-top:20px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>ร้านค้าออนไลน์ของฉัน 🛍️</h1>
+<h1>ร้านค้าของฉัน 🛍️</h1>
 
-<div class="container">
-
-  <div class="product">
-    <h3>สินค้า A</h3>
-    <p>ราคา 199 บาท</p>
-    <button onclick="pay(199)">สั่งซื้อ</button>
-  </div>
-
-  <div class="product">
-    <h3>สินค้า B</h3>
-    <p>ราคา 299 บาท</p>
-    <button onclick="pay(299)">สั่งซื้อ</button>
-  </div>
-
+<div class="product">
+<h2>ตั้งค่า iOS ❤️</h2>
+<p>50 บาท</p>
+<button onclick="addToCart('ตั้งค่า iOS',50)">เพิ่มลงตะกร้า</button>
 </div>
 
-<div class="qr-box" id="qrBox"></div>
+<div class="product">
+<h2>พาแนล iOS 90%</h2>
+<p>150 บาท</p>
+<button onclick="addToCart('พาแนล iOS',150)">เพิ่มลงตะกร้า</button>
+</div>
+
+<div class="cart">
+<h2>🛒 ตะกร้า</h2>
+<div id="list"></div>
+<h3>รวม: <span id="total">0</span> บาท</h3>
+<button onclick="pay()">ชำระเงิน</button>
+</div>
+
+<div class="qr" id="qr"></div>
 
 <script>
-function pay(amount) {
-  const phone = "0989871584";
-  const qrURL = `https://promptpay.io/${phone}/${amount}.png`;
+let cart=[];
+let total=0;
 
-  document.getElementById("qrBox").innerHTML = `
-    <h2>สแกนเพื่อชำระเงิน ${amount} บาท</h2>
-    <img src="${qrURL}" width="250">
-    <p>เมื่อโอนเสร็จ กรุณาแจ้งสลิปทาง LINE</p>
-  `;
+function addToCart(name,price){
+  cart.push({name,price});
+  total+=price;
+  render();
+}
+
+function render(){
+  let html="";
+  cart.forEach(i=>{
+    html+="<p>"+i.name+" - "+i.price+" บาท</p>";
+  });
+  document.getElementById("list").innerHTML=html;
+  document.getElementById("total").innerText=total;
+}
+
+function pay(){
+  if(total==0){
+    alert("ยังไม่มีสินค้า");
+    return;
+  }
+
+  let phone="0989871584"; // ใส่เบอร์คุณตรงนี้
+  let qr="https://promptpay.io/"+phone+"/"+total+".png";
+
+  document.getElementById("qr").innerHTML=
+  "<h2>สแกนจ่าย "+total+" บาท</h2>"+
+  "<img src='"+qr+"' width='250'><br><br>"+
+  "<a href='https://line.me/ti/p/YOUR_LINE_ID' target='_blank'>" +
+  "<button>ส่งสลิปทาง LINE</button></a>";
 }
 </script>
 
