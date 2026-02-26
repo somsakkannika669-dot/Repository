@@ -3,235 +3,75 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Shop</title>
-
+<title>ร้านค้าออนไลน์ของฉัน</title>
 <style>
-body{background:#0f0f0f;color:#fff;font-family:sans-serif;text-align:center}
-.card{background:#1c1c1c;padding:20px;margin:15px;border-radius:15px}
-button{background:#00e6a8;border:none;padding:10px 20px;border-radius:10px;cursor:pointer;margin:5px}
-input{padding:8px;border-radius:8px;border:none;margin:5px}
-.admin-btn{position:fixed;top:10px;right:10px}
-.hidden{display:none}
-.small{font-size:12px;color:#aaa}
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background: #f4f4f4;
+}
+
+.container {
+  margin-top: 50px;
+}
+
+.product {
+  background: white;
+  padding: 20px;
+  margin: 20px;
+  display: inline-block;
+  border-radius: 10px;
+  width: 200px;
+}
+
+button {
+  padding: 10px 15px;
+  border: none;
+  background: orange;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.qr-box {
+  margin-top: 30px;
+}
 </style>
 </head>
+
 <body>
 
-<button class="admin-btn" onclick="adminLogin()">🔐</button>
+<h1>ร้านค้าออนไลน์ของฉัน 🛍️</h1>
 
-<h1>🛍 ร้านของฉัน</h1>
-<div id="product-list"></div>
+<div class="container">
 
-<div class="card">
-<h2>🛒 ตะกร้าสินค้า</h2>
-<div id="cart-items"></div>
-<h3>ยอดรวม: <span id="total">0</span> บาท</h3>
+  <div class="product">
+    <h3>สินค้า A</h3>
+    <p>ราคา 199 บาท</p>
+    <button onclick="pay(199)">สั่งซื้อ</button>
+  </div>
 
-<h3>📲 สแกนจ่าย PromptPay</h3>
-<div id="qrBox" class="small">QR จะสร้างเมื่อมียอดรวม</div>
-<br>
-<input type="file" id="slipUpload">
-<br>
-<button onclick="submitOrder()">แจ้งชำระเงิน</button>
-<button onclick="clearCart()">เคลียร์ตะกร้า</button>
+  <div class="product">
+    <h3>สินค้า B</h3>
+    <p>ราคา 299 บาท</p>
+    <button onclick="pay(299)">สั่งซื้อ</button>
+  </div>
+
 </div>
 
-<div class="card">
-<h2>📦 ประวัติการสั่งซื้อ</h2>
-<div id="order-history"></div>
-</div>
-
-<!-- ADMIN PANEL -->
-<div id="adminPanel" class="hidden">
-<div class="card">
-<h2>⚙ แอดมิน</h2>
-
-<h3>➕ เพิ่มสินค้า</h3>
-<input type="text" id="newName" placeholder="ชื่อสินค้า">
-<input type="number" id="newPrice" placeholder="ราคา">
-<button onclick="addProduct()">เพิ่มสินค้า</button>
-
-<h3>🗑 ลบสินค้า</h3>
-<div id="admin-products"></div>
-
-<h3>📦 จัดการออเดอร์</h3>
-<div id="admin-orders"></div>
-
-<button onclick="logout()">ออกจากแอดมิน</button>
-</div>
-</div>
+<div class="qr-box" id="qrBox"></div>
 
 <script>
-/* ====== ตั้งค่า ====== */
-const PROMPTPAY_PHONE="0989871584"; // 🔴 เปลี่ยนเป็นเบอร์คุณ
-const ADMIN_PASS="2005"; // 🔴 เปลี่ยนรหัสแอดมินได้ตรงนี้
-/* ==================== */
+function pay(amount) {
+  const phone = "0989871584";
+  const qrURL = `https://promptpay.io/${phone}/${amount}.png`;
 
-let cart=[];
-let total=0;
-
-/* ---------- โหลดสินค้า ---------- */
-function loadProducts(){
-let products=JSON.parse(localStorage.getItem("products"))||[
-{name:"พาแนล 97%",price:250},
-{name:"ตั้งค่าใช้ได้ทุกวัน",price:150}
-];
-localStorage.setItem("products",JSON.stringify(products));
-
-let container=document.getElementById("product-list");
-let adminList=document.getElementById("admin-products");
-container.innerHTML="";
-adminList.innerHTML="";
-
-products.forEach((p,index)=>{
-container.innerHTML+=`
-<div class="card">
-<h2>${p.name}</h2>
-<p>${p.price} บาท</p>
-<button onclick="addToCart('${p.name}',${p.price})">เพิ่มลงตะกร้า</button>
-</div>`;
-
-adminList.innerHTML+=`
-<p>${p.name} - ${p.price} บาท 
-<button onclick="deleteProduct(${index})">ลบ</button></p>`;
-});
+  document.getElementById("qrBox").innerHTML = `
+    <h2>สแกนเพื่อชำระเงิน ${amount} บาท</h2>
+    <img src="${qrURL}" width="250">
+    <p>เมื่อโอนเสร็จ กรุณาแจ้งสลิปทาง LINE</p>
+  `;
 }
-
-/* ---------- เพิ่มสินค้า ---------- */
-function addProduct(){
-let name=document.getElementById("newName").value;
-let price=parseInt(document.getElementById("newPrice").value);
-
-if(!name||!price){alert("กรอกข้อมูลให้ครบ");return;}
-
-let products=JSON.parse(localStorage.getItem("products"))||[];
-products.push({name,price});
-localStorage.setItem("products",JSON.stringify(products));
-alert("เพิ่มสินค้าแล้ว");
-loadProducts();
-}
-
-/* ---------- ลบสินค้า ---------- */
-function deleteProduct(i){
-let products=JSON.parse(localStorage.getItem("products"));
-products.splice(i,1);
-localStorage.setItem("products",JSON.stringify(products));
-loadProducts();
-}
-
-/* ---------- ตะกร้า ---------- */
-function addToCart(name,price){
-cart.push({name,price});
-renderCart();
-}
-
-function renderCart(){
-let container=document.getElementById("cart-items");
-container.innerHTML="";
-total=0;
-
-cart.forEach(i=>{
-container.innerHTML+=`<p>${i.name} - ${i.price} บาท</p>`;
-total+=i.price;
-});
-
-document.getElementById("total").innerText=total;
-generateQR();
-}
-
-function clearCart(){
-cart=[];
-renderCart();
-document.getElementById("qrBox").innerHTML="QR จะสร้างเมื่อมียอดรวม";
-}
-
-/* ---------- QR ---------- */
-function generateQR(){
-if(total<=0){
-document.getElementById("qrBox").innerHTML="QR จะสร้างเมื่อมียอดรวม";
-return;
-}
-let amount=total.toFixed(2);
-let url=`https://promptpay.io/${PROMPTPAY_PHONE}/${amount}.png`;
-document.getElementById("qrBox").innerHTML=
-`<img src="${url}" width="220">
-<div class="small">เบอร์ ${PROMPTPAY_PHONE} | ${amount} บาท</div>`;
-}
-
-/* ---------- สั่งซื้อ ---------- */
-function submitOrder(){
-if(total===0){alert("ยังไม่มีสินค้า");return;}
-let slip=document.getElementById("slipUpload").files[0];
-if(!slip){alert("กรุณาแนบสลิป");return;}
-
-let orders=JSON.parse(localStorage.getItem("orders"))||[];
-orders.push({
-date:new Date().toLocaleString(),
-total:total,
-slip:slip.name,
-status:"รอตรวจสอบ"
-});
-localStorage.setItem("orders",JSON.stringify(orders));
-
-alert("แจ้งชำระเงินสำเร็จ");
-cart=[];
-renderCart();
-loadOrders();
-}
-
-/* ---------- โหลดออเดอร์ ---------- */
-function loadOrders(){
-let orders=JSON.parse(localStorage.getItem("orders"))||[];
-let history=document.getElementById("order-history");
-let admin=document.getElementById("admin-orders");
-history.innerHTML="";
-admin.innerHTML="";
-
-orders.forEach((o,i)=>{
-history.innerHTML+=`
-<p>🕒 ${o.date}<br>
-💰 ${o.total} บาท<br>
-📎 ${o.slip}<br>
-📌 ${o.status}</p><hr>`;
-
-admin.innerHTML+=`
-<p>${o.date} - ${o.total} บาท - ${o.status}
-<br>
-<button onclick="approve(${i})">อนุมัติ</button>
-<button onclick="deleteOrder(${i})">ลบ</button>
-</p><hr>`;
-});
-}
-
-function approve(i){
-let orders=JSON.parse(localStorage.getItem("orders"));
-orders[i].status="อนุมัติแล้ว";
-localStorage.setItem("orders",JSON.stringify(orders));
-loadOrders();
-}
-
-function deleteOrder(i){
-let orders=JSON.parse(localStorage.getItem("orders"));
-orders.splice(i,1);
-localStorage.setItem("orders",JSON.stringify(orders));
-loadOrders();
-}
-
-/* ---------- แอดมิน ---------- */
-function adminLogin(){
-let pass=prompt("ใส่รหัสแอดมิน");
-if(pass===ADMIN_PASS){
-document.getElementById("adminPanel").classList.remove("hidden");
-}else alert("รหัสผิด");
-}
-
-function logout(){
-document.getElementById("adminPanel").classList.add("hidden");
-}
-
-/* ---------- เริ่มระบบ ---------- */
-loadProducts();
-loadOrders();
 </script>
 
 </body>
