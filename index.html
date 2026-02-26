@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SHOP</title>
+<title>บักรินช๊อป</title>
 
 <style>
 body{
@@ -12,13 +12,8 @@ body{
     background: linear-gradient(180deg,#1a0000,#0a0000);
     color:white;
 }
+.container{ padding:15px; }
 
-/* container */
-.container{
-    padding:15px;
-}
-
-/* banner */
 .banner{
     background: linear-gradient(90deg,#ff0000,#990000);
     padding:20px;
@@ -28,14 +23,12 @@ body{
     margin-bottom:20px;
 }
 
-/* stat box */
 .stats{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:10px;
     margin-bottom:20px;
 }
-
 .stat-box{
     background:#111;
     border-radius:15px;
@@ -43,21 +36,18 @@ body{
     text-align:center;
     border:1px solid #ff0000;
 }
-
 .stat-box span{
     font-size:20px;
     color:#ff2e2e;
     font-weight:bold;
 }
 
-/* menu buttons */
 .menu{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:10px;
     margin-bottom:20px;
 }
-
 .menu button{
     background:linear-gradient(90deg,#ff0000,#800000);
     border:none;
@@ -68,35 +58,29 @@ body{
     font-size:16px;
 }
 
-/* products */
 .products{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:15px;
 }
-
 .product{
     background:#111;
     border-radius:15px;
     padding:10px;
     border:1px solid #ff0000;
 }
-
 .product img{
     width:100%;
     border-radius:10px;
 }
-
 .product h3{
     font-size:14px;
     margin:8px 0;
 }
-
 .product p{
     color:#ff2e2e;
     font-weight:bold;
 }
-
 .product button{
     width:100%;
     padding:10px;
@@ -105,6 +89,30 @@ body{
     color:white;
     border-radius:10px;
 }
+
+/* Cart Section */
+#cart-section{
+    display:none;
+}
+.cart-item{
+    background:#111;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:10px;
+}
+.cart-item button{
+    margin-top:5px;
+    background:#ff0000;
+}
+.total{
+    font-size:18px;
+    font-weight:bold;
+    margin-top:10px;
+}
+.back-btn{
+    margin-bottom:15px;
+    background:#444;
+}
 </style>
 </head>
 
@@ -112,59 +120,109 @@ body{
 
 <div class="container">
 
-    <!-- banner -->
-    <div class="banner">
-        B-GOD SHOP
+    <div class="banner">B-GOD SHOP</div>
+
+    <!-- หน้าแรก -->
+    <div id="shop-section">
+
+        <div class="stats">
+            <div class="stat-box">ผู้ใช้งาน<br><span>12,403</span></div>
+            <div class="stat-box">หมวดหมู่<br><span>18</span></div>
+            <div class="stat-box">สินค้า<br><span>4,241</span></div>
+            <div class="stat-box">ยอดเติมเงิน<br><span>1,643,072</span></div>
+        </div>
+
+        <div class="menu">
+            <button onclick="showShop()">สินค้า</button>
+            <button onclick="showCart()">🛒 ตะกร้า</button>
+            <button>ประวัติ</button>
+            <button>ติดต่อ</button>
+        </div>
+
+        <div class="products">
+
+            <div class="product">
+                <img src="https://via.placeholder.com/300x200">
+                <h3>ไฟล์ดูดหัว VIP 90%</h3>
+                <p>150 บาท</p>
+                <button onclick="addToCart('ไฟล์ VIP 90%',150)">เพิ่มลงตะกร้า</button>
+            </div>
+
+            <div class="product">
+                <img src="https://via.placeholder.com/300x200">
+                <h3>ไฟล์ดูดหัว VIP 93%</h3>
+                <p>180 บาท</p>
+                <button onclick="addToCart('ไฟล์ VIP 93%',180)">เพิ่มลงตะกร้า</button>
+            </div>
+
+        </div>
     </div>
 
-    <!-- stats -->
-    <div class="stats">
-        <div class="stat-box">
-            ผู้ใช้งาน<br>
-            <span>12,403</span>
-        </div>
-        <div class="stat-box">
-            หมวดหมู่<br>
-            <span>18</span>
-        </div>
-        <div class="stat-box">
-            สินค้า<br>
-            <span>4,241</span>
-        </div>
-        <div class="stat-box">
-            ยอดเติมเงิน<br>
-            <span>1,643,072</span>
-        </div>
-    </div>
-
-    <!-- menu -->
-    <div class="menu">
-        <button>สินค้า</button>
-        <button>เติมเงิน</button>
-        <button>ประวัติ</button>
-        <button>ติดต่อ</button>
-    </div>
-
-    <!-- products -->
-    <div class="products">
-
-        <div class="product">
-            <img src="https://via.placeholder.com/300x200">
-            <h3>ไฟล์ดูดหัว VIP 90%</h3>
-            <p>150 บาท</p>
-            <button>ลงเล่น</button>
-        </div>
-
-        <div class="product">
-            <img src="https://via.placeholder.com/300x200">
-            <h3>ไฟล์ดูดหัว VIP 93%</h3>
-            <p>180 บาท</p>
-            <button>ลงเล่น</button>
-        </div>
-
+    <!-- ตะกร้า -->
+    <div id="cart-section">
+        <button class="back-btn" onclick="showShop()">⬅ กลับร้านค้า</button>
+        <h2>ตะกร้าสินค้า</h2>
+        <div id="cart-list"></div>
+        <div class="total" id="total"></div>
+        <button onclick="checkout()">ชำระเงิน</button>
     </div>
 
 </div>
+
+<script>
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+function saveCart(){
+    localStorage.setItem("cart", JSON.stringify(cart));
+}
+
+function addToCart(name, price){
+    cart.push({name, price});
+    saveCart();
+    alert("เพิ่มสินค้าแล้ว");
+}
+
+function showCart(){
+    document.getElementById("shop-section").style.display="none";
+    document.getElementById("cart-section").style.display="block";
+    renderCart();
+}
+
+function showShop(){
+    document.getElementById("shop-section").style.display="block";
+    document.getElementById("cart-section").style.display="none";
+}
+
+function renderCart(){
+    let list = document.getElementById("cart-list");
+    let total = 0;
+    list.innerHTML = "";
+
+    cart.forEach((item,index)=>{
+        total += item.price;
+        list.innerHTML += `
+            <div class="cart-item">
+                ${item.name} - ${item.price} บาท
+                <br>
+                <button onclick="removeItem(${index})">ลบ</button>
+            </div>
+        `;
+    });
+
+    document.getElementById("total").innerText =
+        "รวมทั้งหมด: " + total + " บาท";
+}
+
+function removeItem(index){
+    cart.splice(index,1);
+    saveCart();
+    renderCart();
+}
+
+function checkout(){
+    alert("ระบบชำระเงินจริงจะพัฒนาเพิ่มภายหลัง");
+}
+</script>
 
 </body>
 </html>
