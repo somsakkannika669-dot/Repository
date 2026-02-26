@@ -1,133 +1,201 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rin-GOD SHOP</title>
-
+<title>RIN SHOP</title>
 <style>
 body{
-  margin:0;
+  background:#1a0000;
   font-family:sans-serif;
-  background:linear-gradient(to bottom,#2b0000,#000);
   color:white;
   text-align:center;
 }
-
-h1{
-  background:linear-gradient(to right,#ff3c3c,#b30000);
-  padding:20px;
-  border-radius:20px;
+button{
+  padding:10px 20px;
+  margin:5px;
+  border:none;
+  border-radius:10px;
+  background:#ff2e2e;
+  color:white;
+  cursor:pointer;
+}
+.card{
+  border:2px solid red;
+  border-radius:15px;
+  padding:15px;
   margin:20px;
 }
-
-.menu button{
-  background:linear-gradient(to right,#ff3c3c,#b30000);
-  border:none;
-  padding:15px 25px;
-  margin:10px;
-  border-radius:20px;
-  color:white;
-  font-size:16px;
+img{
+  width:200px;
+  height:200px;
+  object-fit:cover;
+  border-radius:10px;
 }
-
-#product-list{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-  gap:20px;
-  padding:20px;
-}
-
-.product{
-  background:#111;
-  border:2px solid red;
-  border-radius:20px;
-  padding:15px;
-}
-
-.product img{
-  width:100%;
-  border-radius:15px;
+input{
+  padding:8px;
+  margin:5px;
 }
 </style>
 </head>
-
 <body>
 
 <h1>B-GOD SHOP</h1>
 
-<div class="menu">
-  <button>สินค้า</button>
-  <button>ตะกร้า</button>
-  <button>แอดมิน</button>
+<button onclick="showPage('shop')">สินค้า</button>
+<button onclick="showPage('cart')">ตะกร้า</button>
+<button onclick="showPage('admin')">แอดมิน</button>
+
+<!-- SHOP -->
+<div id="shopPage">
+  <h2>สินค้า</h2>
+  <div id="productList"></div>
 </div>
 
-<div id="product-list"></div>
+<!-- CART -->
+<div id="cartPage" style="display:none;">
+  <h2>ตะกร้า</h2>
+  <div id="cartList"></div>
+  <h3 id="totalPrice">รวม 0 บาท</h3>
+  <button onclick="checkout()">ชำระเงิน</button>
+</div>
 
+<!-- ADMIN -->
+<div id="adminPage" style="display:none;">
+  <h2>เพิ่มสินค้า</h2>
+  <input id="name" placeholder="ชื่อสินค้า"><br>
+  <input id="price" type="number" placeholder="ราคา"><br>
+  <input id="img" placeholder="ลิงก์รูป"><br>
+  <input id="stock" type="number" placeholder="จำนวนสินค้า"><br>
+  <button onclick="addProduct()">เพิ่มสินค้า</button>
+</div>
 
-<!-- FIREBASE SCRIPT -->
 <script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { 
+  getFirestore, 
+  collection, 
+  getDocs, 
+  addDoc,
+  doc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDxhFMeqFzsGhZPyN999",
-  authDomain: "bgod-shop.firebaseapp.com",
-  projectId: "bgod-shop",
-  storageBucket: "bgod-shop.appspot.com",
-  messagingSenderId: "518490266795",
-  appId: "1:518490266795:web:34143c9"
+  apiKey: "ใส่ของคุณ",
+  authDomain: "ใส่ของคุณ",
+  projectId: "ใส่ของคุณ",
+  storageBucket: "ใส่ของคุณ",
+  messagingSenderId: "ใส่ของคุณ",
+  appId: "ใส่ของคุณ"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+let cart = [];
+let productsCache = [];
 
-// โหลดสินค้า
 async function loadProducts(){
-  const list = document.getElementById("product-list");
+  const snapshot = await getDocs(collection(db,"products"));
+  const list = document.getElementById("productList");
   list.innerHTML="";
-
-  const querySnapshot = await getDocs(collection(db, "products"));
-
-  querySnapshot.forEach((doc)=>{
-    let p = doc.data();
+  productsCache = [];
+  snapshot.forEach((docSnap)=>{
+    const data = docSnap.data();
+    data.id = docSnap.id;
+    productsCache.push(data);
 
     list.innerHTML += `
-      <div class="product">
-        <img src="${p.img}">
-        <h3>${p.name}</h3>
-        <p style="color:red;">${p.price} บาท</p>
-        <button onclick="addToCart('${p.name}',${p.price})">
-          เพิ่มลงตะกร้า
-        </button>
+      <div class="card">
+        <img src="${data.img}">
+        <h3>${data.name}</h3>
+        <p>${data.price} บาท</p>
+        <p>คงเหลือ ${data.stock ?? 0}</p>
+        <button onclick="addToCart('${data.id}')">เพิ่มลงตะกร้า</button>
       </div>
     `;
   });
 }
 
-loadProducts();
+window.addToCart = function(id){
+  const product = productsCache.find(p=>p.id===id);
+  if(!product) return;
+  if(product.stock <= 0){
+    alert("สินค้าหมด");
+    return;
+  }
+  cart.push(product);
+  renderCart();
+}
 
+function renderCart(){
+  const cartList = document.getElementById("cartList");
+  cartList.innerHTML="";
+  let total=0;
+  cart.forEach((item)=>{
+    total+=item.price;
+    cartList.innerHTML += `<p>${item.name} - ${item.price} บาท</p>`;
+  });
+  document.getElementById("totalPrice").innerText="รวม "+total+" บาท";
+}
 
-// เพิ่มสินค้า (เรียกจากหน้าแอดมินได้)
-window.addProduct = async function(name,price,img){
-  await addDoc(collection(db, "products"), {
+window.checkout = async function(){
+  if(cart.length===0){
+    alert("ไม่มีสินค้า");
+    return;
+  }
+
+  let total = cart.reduce((sum,i)=>sum+i.price,0);
+
+  // สร้าง QR พร้อมเพย์ (เปลี่ยนเบอร์คุณ)
+  const phone = "0989871584";
+  const qr = `https://promptpay.io/${phone}/${total}.png`;
+
+  window.open(qr,"_blank");
+
+  await addDoc(collection(db,"orders"),{
+    items:cart,
+    total:total,
+    createdAt:new Date()
+  });
+
+  alert("บันทึกออเดอร์แล้ว");
+  cart=[];
+  renderCart();
+}
+
+window.addProduct = async function(){
+  const name=document.getElementById("name").value;
+  const price=Number(document.getElementById("price").value);
+  const img=document.getElementById("img").value;
+  const stock=Number(document.getElementById("stock").value);
+
+  if(!name||!price||!img||!stock){
+    alert("กรอกให้ครบ");
+    return;
+  }
+
+  await addDoc(collection(db,"products"),{
     name:name,
     price:price,
-    img:img
+    img:img,
+    stock:stock
   });
 
   alert("เพิ่มสินค้าแล้ว");
   loadProducts();
 }
 
-
-// ตะกร้าจำลอง
-window.addToCart = function(name,price){
-  alert("เพิ่ม "+name+" ลงตะกร้าแล้ว");
+window.showPage = function(page){
+  document.getElementById("shopPage").style.display="none";
+  document.getElementById("cartPage").style.display="none";
+  document.getElementById("adminPage").style.display="none";
+  if(page==="shop") document.getElementById("shopPage").style.display="block";
+  if(page==="cart") document.getElementById("cartPage").style.display="block";
+  if(page==="admin") document.getElementById("adminPage").style.display="block";
 }
 
+loadProducts();
 </script>
 
 </body>
