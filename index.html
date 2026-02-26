@@ -39,11 +39,11 @@ input{
 </head>
 <body>
 
-<h1>B-GOD SHOP</h1>
+<h1>RIN SHOP</h1>
 
 <button onclick="showPage('shop')">สินค้า</button>
 <button onclick="showPage('cart')">ตะกร้า</button>
-<button onclick="showPage('admin')">แอดมิน</button>
+<button onclick="showAdmin()">แอดมิน</button>
 
 <!-- SHOP -->
 <div id="shopPage">
@@ -59,7 +59,15 @@ input{
   <button onclick="checkout()">ชำระเงิน</button>
 </div>
 
-<!-- ADMIN -->
+<!-- ADMIN LOGIN -->
+<div id="adminLoginPage" style="display:none;">
+  <h2>เข้าสู่ระบบแอดมิน</h2>
+  <input type="password" id="adminPass" placeholder="รหัสผ่านแอดมิน">
+  <br>
+  <button onclick="checkAdmin()">เข้าสู่ระบบ</button>
+</div>
+
+<!-- ADMIN PAGE -->
 <div id="adminPage" style="display:none;">
   <h2>เพิ่มสินค้า</h2>
   <input id="name" placeholder="ชื่อสินค้า"><br>
@@ -77,7 +85,8 @@ import {
   getDocs, 
   addDoc,
   doc,
-  updateDoc
+  updateDoc,
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -94,6 +103,7 @@ const db = getFirestore(app);
 
 let cart = [];
 let productsCache = [];
+const ADMIN_PASSWORD = "rin1234";
 
 async function loadProducts(){
   const snapshot = await getDocs(collection(db,"products"));
@@ -146,22 +156,31 @@ window.checkout = async function(){
   }
 
   let total = cart.reduce((sum,i)=>sum+i.price,0);
-
-  // สร้าง QR พร้อมเพย์ (เปลี่ยนเบอร์คุณ)
   const phone = "0989871584";
   const qr = `https://promptpay.io/${phone}/${total}.png`;
-
   window.open(qr,"_blank");
 
   await addDoc(collection(db,"orders"),{
     items:cart,
     total:total,
+    status:"รอตรวจสอบ",
     createdAt:new Date()
   });
 
-  alert("บันทึกออเดอร์แล้ว");
+  // หักสต๊อก
+  for(const item of cart){
+    const productRef = doc(db,"products",item.id);
+    const snap = await getDoc(productRef);
+    const currentStock = snap.data().stock || 0;
+    await updateDoc(productRef,{
+      stock: currentStock - 1
+    });
+  }
+
+  alert("สั่งซื้อเรียบร้อย รอแอดมินตรวจสอบ");
   cart=[];
   renderCart();
+  loadProducts();
 }
 
 window.addProduct = async function(){
@@ -190,9 +209,25 @@ window.showPage = function(page){
   document.getElementById("shopPage").style.display="none";
   document.getElementById("cartPage").style.display="none";
   document.getElementById("adminPage").style.display="none";
+  document.getElementById("adminLoginPage").style.display="none";
   if(page==="shop") document.getElementById("shopPage").style.display="block";
-  if(page==="cart") document.getElementById("cartPage").style.display="block";
-  if(page==="admin") document.getElementById("adminPage").style.display="block";
+  if(page==="cart") document.getElementByById("cartPage").style.display="block";
+}
+
+window.showAdmin = function(){
+  document.getElementById("shopPage").style.display="none";
+  document.getElementById("cartPage").style.display="none";
+  document.getElementById("adminLoginPage").style.display="block";
+}
+
+window.checkAdmin = function(){
+  const pass = document.getElementById("adminPass").value;
+  if(pass===ADMIN_PASSWORD){
+    document.getElementById("adminLoginPage").style.display="none";
+    document.getElementById("adminPage").style.display="block";
+  }else{
+    alert("รหัสผ่านผิด");
+  }
 }
 
 loadProducts();
