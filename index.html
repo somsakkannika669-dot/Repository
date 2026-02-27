@@ -1,234 +1,198 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>RIN SHOP</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BGOD SHOP</title>
+
+<!-- PromptPay + QR -->
+<script src="https://cdn.jsdelivr.net/npm/promptpay-qr"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
 <style>
-body{
-  background:#1a0000;
-  font-family:sans-serif;
-  color:white;
-  text-align:center;
-}
-button{
-  padding:10px 20px;
-  margin:5px;
-  border:none;
-  border-radius:10px;
-  background:#ff2e2e;
-  color:white;
-  cursor:pointer;
-}
-.card{
-  border:2px solid red;
-  border-radius:15px;
-  padding:15px;
-  margin:20px;
-}
-img{
-  width:200px;
-  height:200px;
-  object-fit:cover;
-  border-radius:10px;
-}
-input{
-  padding:8px;
-  margin:5px;
-}
+body{margin:0;font-family:sans-serif;background:#111;color:#fff;text-align:center}
+header{background:#000;padding:20px;font-size:24px;font-weight:bold}
+.container{padding:20px}
+.card{background:#1e1e1e;padding:15px;margin:10px;border-radius:10px}
+button{background:#00ff88;border:none;padding:8px 16px;margin:5px;border-radius:6px;font-weight:bold}
+input{padding:8px;margin:5px;border-radius:6px;border:none}
+.admin{background:#222;padding:15px;margin-top:30px;border-radius:10px}
+#paymentModal{display:none;position:fixed;inset:0;background:#000000dd;justify-content:center;align-items:center}
+.modalBox{background:#111;padding:20px;border-radius:12px}
+img{max-width:150px;border-radius:8px}
 </style>
 </head>
 <body>
 
-<h1>RIN SHOP</h1>
+<header>BGOD SHOP</header>
 
-<button onclick="showPage('shop')">สินค้า</button>
-<button onclick="showPage('cart')">ตะกร้า</button>
-<button onclick="showAdmin()">แอดมิน</button>
-
-<!-- SHOP -->
-<div id="shopPage">
-  <h2>สินค้า</h2>
-  <div id="productList"></div>
+<div class="container">
+<h2>สินค้า</h2>
+<div id="product-list"></div>
 </div>
 
-<!-- CART -->
-<div id="cartPage" style="display:none;">
-  <h2>ตะกร้า</h2>
-  <div id="cartList"></div>
-  <h3 id="totalPrice">รวม 0 บาท</h3>
-  <button onclick="checkout()">ชำระเงิน</button>
+<div class="admin" id="admin-section" style="display:none;">
+<h2>เพิ่มสินค้า (แอดมิน)</h2>
+<input type="text" id="name" placeholder="ชื่อสินค้า">
+<input type="number" id="price" placeholder="ราคา">
+<input type="number" id="stock" placeholder="จำนวนสต็อก">
+<button onclick="addProduct()">เพิ่มสินค้า</button>
+
+<h2>ออเดอร์รอตรวจสอบ</h2>
+<div id="ordersList"></div>
 </div>
 
-<!-- ADMIN LOGIN -->
-<div id="adminLoginPage" style="display:none;">
-  <h2>เข้าสู่ระบบแอดมิน</h2>
-  <input type="password" id="adminPass" placeholder="รหัสผ่านแอดมิน">
-  <br>
-  <button onclick="checkAdmin()">เข้าสู่ระบบ</button>
+<div>
+<h3>ล็อกอินแอดมิน</h3>
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Password">
+<button onclick="login()">เข้าสู่ระบบ</button>
+<button onclick="logout()">ออกจากระบบ</button>
 </div>
 
-<!-- ADMIN PAGE -->
-<div id="adminPage" style="display:none;">
-  <h2>เพิ่มสินค้า</h2>
-  <input id="name" placeholder="ชื่อสินค้า"><br>
-  <input id="price" type="number" placeholder="ราคา"><br>
-  <input id="img" placeholder="ลิงก์รูป"><br>
-  <input id="stock" type="number" placeholder="จำนวนสินค้า"><br>
-  <button onclick="addProduct()">เพิ่มสินค้า</button>
+<!-- PAYMENT MODAL -->
+<div id="paymentModal">
+  <div class="modalBox">
+    <h3>สแกนจ่าย</h3>
+    <canvas id="qrcode"></canvas><br><br>
+    <input type="file" id="slipUpload"><br><br>
+    <button onclick="confirmPayment()">ยืนยันการชำระเงิน</button>
+    <button onclick="closeModal()">ปิด</button>
+  </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { 
-  getFirestore, 
-  collection, 
-  getDocs, 
-  addDoc,
-  doc,
-  updateDoc,
-  getDoc
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, getDoc } 
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getStorage, ref, uploadBytes, getDownloadURL }
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const firebaseConfig = {
-  apiKey: "ใส่ของคุณ",
-  authDomain: "ใส่ของคุณ",
-  projectId: "ใส่ของคุณ",
-  storageBucket: "ใส่ของคุณ",
-  messagingSenderId: "ใส่ของคุณ",
-  appId: "ใส่ของคุณ"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "bgod-shop.firebaseapp.com",
+  projectId: "bgod-shop",
+  storageBucket: "bgod-shop.appspot.com",
+  messagingSenderId: "YOUR_ID",
+  appId: "YOUR_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
 
-let cart = [];
-let productsCache = [];
-const ADMIN_PASSWORD = "rin1234";
+let currentOrder = null;
 
+// โหลดสินค้า
 async function loadProducts(){
   const snapshot = await getDocs(collection(db,"products"));
-  const list = document.getElementById("productList");
+  const list = document.getElementById("product-list");
   list.innerHTML="";
-  productsCache = [];
-  snapshot.forEach((docSnap)=>{
+  snapshot.forEach(docSnap=>{
     const data = docSnap.data();
-    data.id = docSnap.id;
-    productsCache.push(data);
-
     list.innerHTML += `
       <div class="card">
-        <img src="${data.img}">
         <h3>${data.name}</h3>
         <p>${data.price} บาท</p>
-        <p>คงเหลือ ${data.stock ?? 0}</p>
-        <button onclick="addToCart('${data.id}')">เพิ่มลงตะกร้า</button>
+        <p>คงเหลือ ${data.stock}</p>
+        <button onclick="orderProduct('${docSnap.id}','${data.name}',${data.price},${data.stock})">
+          สั่งซื้อ
+        </button>
       </div>
     `;
   });
 }
-
-window.addToCart = function(id){
-  const product = productsCache.find(p=>p.id===id);
-  if(!product) return;
-  if(product.stock <= 0){
-    alert("สินค้าหมด");
-    return;
-  }
-  cart.push(product);
-  renderCart();
+window.orderProduct = function(id,name,price,stock){
+  if(stock<=0){alert("สินค้าหมด");return;}
+  const customerName = prompt("กรอกชื่อผู้สั่งซื้อ:");
+  const payload = PromptPayQR.generate("0989871584",{amount:price});
+  QRCode.toCanvas(document.getElementById("qrcode"),payload);
+  currentOrder = {id,name,price,customerName};
+  document.getElementById("paymentModal").style.display="flex";
 }
-
-function renderCart(){
-  const cartList = document.getElementById("cartList");
-  cartList.innerHTML="";
-  let total=0;
-  cart.forEach((item)=>{
-    total+=item.price;
-    cartList.innerHTML += `<p>${item.name} - ${item.price} บาท</p>`;
-  });
-  document.getElementById("totalPrice").innerText="รวม "+total+" บาท";
+window.closeModal = function(){
+  document.getElementById("paymentModal").style.display="none";
 }
-
-window.checkout = async function(){
-  if(cart.length===0){
-    alert("ไม่มีสินค้า");
-    return;
-  }
-
-  let total = cart.reduce((sum,i)=>sum+i.price,0);
-  const phone = "0989871584";
-  const qr = `https://promptpay.io/${phone}/${total}.png`;
-  window.open(qr,"_blank");
-
+window.confirmPayment = async function(){
+  const file = document.getElementById("slipUpload").files[0];
+  if(!file)return alert("แนบสลิปก่อน");
+  const storageRef = ref(storage,"slips/"+Date.now());
+  await uploadBytes(storageRef,file);
+  const slipURL = await getDownloadURL(storageRef);
   await addDoc(collection(db,"orders"),{
-    items:cart,
-    total:total,
-    status:"รอตรวจสอบ",
+    productId:currentOrder.id,
+    productName:currentOrder.name,
+    price:currentOrder.price,
+    customerName:currentOrder.customerName,
+    slipURL:slipURL,
+    status:"pending",
     createdAt:new Date()
   });
-
-  // หักสต๊อก
-  for(const item of cart){
-    const productRef = doc(db,"products",item.id);
-    const snap = await getDoc(productRef);
-    const currentStock = snap.data().stock || 0;
-    await updateDoc(productRef,{
-      stock: currentStock - 1
-    });
-  }
-
-  alert("สั่งซื้อเรียบร้อย รอแอดมินตรวจสอบ");
-  cart=[];
-  renderCart();
-  loadProducts();
+  alert("บันทึกออเดอร์แล้ว");
+  closeModal();
 }
 
+// เพิ่มสินค้า
 window.addProduct = async function(){
   const name=document.getElementById("name").value;
   const price=Number(document.getElementById("price").value);
-  const img=document.getElementById("img").value;
   const stock=Number(document.getElementById("stock").value);
-
-  if(!name||!price||!img||!stock){
-    alert("กรอกให้ครบ");
-    return;
-  }
-
-  await addDoc(collection(db,"products"),{
-    name:name,
-    price:price,
-    img:img,
-    stock:stock
-  });
-
+  await addDoc(collection(db,"products"),{name,price,stock});
   alert("เพิ่มสินค้าแล้ว");
   loadProducts();
 }
 
-window.showPage = function(page){
-  document.getElementById("shopPage").style.display="none";
-  document.getElementById("cartPage").style.display="none";
-  document.getElementById("adminPage").style.display="none";
-  document.getElementById("adminLoginPage").style.display="none";
-  if(page==="shop") document.getElementById("shopPage").style.display="block";
-  if(page==="cart") document.getElementByById("cartPage").style.display="block";
+// โหลดออเดอร์
+async function loadOrders(){
+  const snapshot=await getDocs(collection(db,"orders"));
+  const container=document.getElementById("ordersList");
+  container.innerHTML="";
+  snapshot.forEach(docSnap=>{
+    const data=docSnap.data();
+    if(data.status==="pending"){
+      container.innerHTML+=`
+        <div class="card">
+          <p>${data.productName} - ${data.customerName}</p>
+          <img src="${data.slipURL}">
+          <button onclick="approveOrder('${docSnap.id}','${data.productId}')">
+            อนุมัติ
+          </button>
+        </div>
+      `;
+    }
+  });
+}
+window.approveOrder = async function(orderId,productId){
+  const productRef=doc(db,"products",productId);
+  const snap=await getDoc(productRef);
+  const productData=snap.data();
+  await updateDoc(productRef,{stock:productData.stock-1});
+  await updateDoc(doc(db,"orders",orderId),{status:"approved"});
+  alert("อนุมัติแล้ว");
+  loadOrders();
+  loadProducts();
 }
 
-window.showAdmin = function(){
-  document.getElementById("shopPage").style.display="none";
-  document.getElementById("cartPage").style.display="none";
-  document.getElementById("adminLoginPage").style.display="block";
+// AUTH
+window.login = function(){
+  const email=document.getElementById("email").value;
+  const password=document.getElementById("password").value;
+  signInWithEmailAndPassword(auth,email,password)
+    .then(()=>alert("ล็อกอินสำเร็จ"))
+    .catch(e=>alert(e.message));
 }
-
-window.checkAdmin = function(){
-  const pass = document.getElementById("adminPass").value;
-  if(pass===ADMIN_PASSWORD){
-    document.getElementById("adminLoginPage").style.display="none";
-    document.getElementById("adminPage").style.display="block";
+window.logout = function(){signOut(auth);}
+onAuthStateChanged(auth,user=>{
+  if(user){
+    document.getElementById("admin-section").style.display="block";
+    loadOrders();
   }else{
-    alert("รหัสผ่านผิด");
+    document.getElementById("admin-section").style.display="none";
   }
-}
+});
 
 loadProducts();
 </script>
